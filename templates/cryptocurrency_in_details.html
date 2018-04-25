@@ -32,6 +32,22 @@
         </form>
         </div>
         
+        <div>
+            <div id="div_history" style="display: none"> </div>
+            <div id="div_news" style="display: none"></div>
+                <ul id="ul_news">
+<!--
+                    <li>
+                        <img src="" style="width: 50px; height: 50px">
+                        <title href=""></title>
+                        <p></p>
+                    </li>
+-->
+            </ul>
+            <div id="div_market" style="display: none"></div>
+            <div id="prediction" style="display: none"></div>
+            <div id="div_calculator" style="display: none"></div>
+        </div>
     </div>
     
     <script type=text/javascript>
@@ -50,7 +66,25 @@
       }, function(data) {
            if( data[0].status =="success"){
                if(data[1].status=="ok"){
-                   console.log(data[1].articles)
+//                   articles = JSON.parse(data[1].articles)
+//                   console.log(typeof(articles))
+//                   console.log(articles)
+                articles_list = data[1].articles
+                   console.log(articles_list)
+                   $('#ul_news').empty()
+                   for(i =0;i< articles_list.length;i++){
+                       article = articles_list[i]
+                       console.log(article.author)
+                      _li = '<li>'+
+                       '<img src="'+article.urlToImage+'" style="width: 50px; height: 50px">'+
+                        '<h3 href="'+article.url+'">'+article.title+'</h3>'+
+                        '<h6>'+article.description+'</h6>'+
+                        '</li>'
+                       
+                       $('#ul_news').append(_li)
+            
+                   }
+                   $('#div_news').css("display", "")
                }
                
            }else{
@@ -71,7 +105,7 @@
            if( data[0].status =="success"){
            display = data[1].DISPLAY
            console.log(display[asset_id].USD)
-               //console.log(data[1].DISPLAY.$('#btn_market').val().USD)
+               
            }else{
            alert("Oops! Something went wrong.");
            }
