@@ -181,6 +181,26 @@ def market_details():
         return jsonify({'status': 'error'})
 
 
+@app.route('/multiple_symbol_price', methods=["GET"])
+def getMultiplePrices():
+    # name = Flask.request_class.args.get('name',default=None, type=None)
+
+    asset_id = (flask.request.args).to_dict(flat=False)["asset_id"][0]
+    # currency_details = CrCurrencyDetails()
+    # URL to get cryptocurrency data in detail
+    URL = 'https://min-api.cryptocompare.com/data/pricemulti?fsyms={}&tsyms=USD,EUR,INR,AUD,AED'.format(asset_id)
+    response = requests.get(URL)
+
+    # Request successful
+    if response.status_code == 200:
+        json_response = response.json()
+        print(json_response)
+        return jsonify({'status': 'success'}, json_response)
+
+    # Error occurred
+    else:
+        return jsonify({'status': 'error'})
+
 # @app.route('/prediction', methods=["GET"])
 # def prediction():
 #     df = quandl.get("BCHARTS/KRAKENUSD", start_date="2018-01-01", end_date="2018-03-10")
@@ -229,8 +249,9 @@ def market_details():
 def prediction():
     # Get Live data from the server
     try:
-        URL = 'https://min-api.cryptocompare.com/data/histoday?fsym=BTC&tsym=USD&limit=1000&aggregate=3&e=CCCAGG'
-        #     URL = 'https://min-api.cryptocompare.com/data/histohour?fsym=BTC&tsym=USD&limit=10000'
+        crycpto_currency = (flask.request.args).to_dict(flat=False)["asset_id"][0]
+        URL = 'https://min-api.cryptocompare.com/data/histoday?fsym={}&tsym=USD&limit=1000&aggregate=3&e=CCCAGG'.format(crycpto_currency)
+        #     URL = 'https://min-api.cryptocompare.com/data/histohour?fsym={}&tsym=USD&limit=10000'.format(crycpto_currency)
         response = requests.get(URL)
         if response.status_code == 200:
             json_response = response.json()
@@ -238,89 +259,92 @@ def prediction():
             print(crc_data)
         else:
             print("Error")
+
+
+        # Convert json data to the CSV
+        filename = 'crc_day_history.csv'
+        try:
+            os.remove(filename)
+        except OSError:
+            pass
+        # Open a file for writing
+        crypto_currency_data = open(filename, 'w')
+
+        # Create a csv writter object
+        csvwritter = csv.writer(crypto_currency_data)
+
+        count = 0
+
+        for cr in crc_data:
+            if count == 0:
+                header = cr.keys()
+                csvwritter.writerow(header)
+                count += 1
+            csvwritter.writerow(cr.values())
+
+        crypto_currency_data.close()
+
+        # Reading CSV file
+        crypto_currency_file = open('crc_day_history.csv','r')
+        crypto_currency_csv = csv.reader(crypto_currency_file)
+
+        # for row in crypto_currency_csv:
+        #     print(row)
+
+        crypto_pd_obj = pd.read_csv(filename)
+
+        # Plot the graph of all data
+        crypto_pd_obj.plot()
+
+        crc_pred = crypto_pd_obj[['open', 'close']]
+        print(crc_pred.tail())
+
+        crc_pred.plot()
+
+        forecast_out = int(1)  # predicting 1 day into future
+        crc_pred['Prediction'] = crc_pred[['open']].shift(-forecast_out)  # label column with data shifted 1 units up
+
+        X = np.array(crc_pred.drop(['Prediction'], 1))
+        X = preprocessing.scale(X)
+
+        X_forecast = X[-forecast_out:]  # set X_forecast equal to last 1
+        X = X[:-forecast_out]  # remove last 30 from X
+
+        y = np.array(crc_pred['Prediction'])
+        y = y[:-forecast_out]
+
+        X_train, X_test, y_train, y_test = cross_validation.train_test_split(X, y, test_size=0.2)
+
+        clf = LinearRegression()
+        clf.fit(X_train, y_train)
+
+        confidence = clf.score(X_test, y_test)
+        print("confidence: ", confidence)
+
+        forecast_prediction = clf.predict(X_forecast)
+        print(forecast_prediction)
+
+        pd.DataFrame(forecast_prediction).plot(color="blue")
+        pred_list = forecast_prediction.tolist()
+
+        # for i in forecast_prediction:
+        #     print(i)
+        #     forecast_prediction[i] = float("%3.f" % forecast_prediction)
+        #
+        #
+        # forecast_with_dates = {}
+        # for i in range(0, 7):
+        #     _date = datetime.datetime.now() + datetime.timedelta(days=(i + 1))
+        #     forecast_with_dates[_date.timestamp()] = forecast_prediction[i]
+        #
+        # print(forecast_with_dates)
+
+        # return jsonify(forecast_prediction)
+        jsonify({'status': 'error'}, json.dumps(pred_list))
+
     except Exception as e:
         print("Error")
 
-    # Convert json data to the CSV
-    filename = 'crc_day_history.csv'
-    try:
-        os.remove(filename)
-    except OSError:
-        pass
-    # Open a file for writing
-    crypto_currency_data = open(filename, 'w')
-
-    # Create a csv writter object
-    csvwritter = csv.writer(crypto_currency_data)
-
-    count = 0
-
-    for cr in crc_data:
-        if count == 0:
-            header = cr.keys()
-            csvwritter.writerow(header)
-            count += 1
-        csvwritter.writerow(cr.values())
-
-    crypto_currency_data.close()
-
-    # Reading CSV file
-    crypto_currency_file = open('crc_day_history.csv')
-    crypto_currency_csv = csv.reader(crypto_currency_file)
-
-    for row in crypto_currency_csv:
-        print(row)
-
-    crypto_pd_obj = pd.read_csv(filename)
-
-    # Plot the graph of all data
-    crypto_pd_obj.plot()
-
-    crc_pred = crypto_pd_obj[['open', 'close']]
-    print(crc_pred.tail())
-
-    crc_pred.plot()
-
-    forecast_out = int(1)  # predicting 30 days into future
-    crc_pred['Prediction'] = crc_pred[['open']].shift(-forecast_out)  # label column with data shifted 30 units up
-
-    X = np.array(crc_pred.drop(['Prediction'], 1))
-    X = preprocessing.scale(X)
-
-    X_forecast = X[-forecast_out:]  # set X_forecast equal to last 30
-    X = X[:-forecast_out]  # remove last 30 from X
-
-    y = np.array(crc_pred['Prediction'])
-    y = y[:-forecast_out]
-
-    X_train, X_test, y_train, y_test = cross_validation.train_test_split(X, y, test_size=0.2)
-
-    clf = LinearRegression()
-    clf.fit(X_train, y_train)
-
-    confidence = clf.score(X_test, y_test)
-    print("confidence: ", confidence)
-
-    forecast_prediction = clf.predict(X_forecast)
-    print(forecast_prediction)
-
-    pd.DataFrame(forecast_prediction).plot(color="blue")
-    print(type(forecast_prediction))
-
-    # for i in forecast_prediction:
-    #     print(i)
-    #     forecast_prediction[i] = float("%3.f" % forecast_prediction)
-    #
-    #
-    # forecast_with_dates = {}
-    # for i in range(0, 7):
-    #     _date = datetime.datetime.now() + datetime.timedelta(days=(i + 1))
-    #     forecast_with_dates[_date.timestamp()] = forecast_prediction[i]
-    #
-    # print(forecast_with_dates)
-
-    # return jsonify(forecast_prediction)
-    jsonify({'status': 'error'},{'prediction':forecast_prediction})
 
 
 if __name__ == "__main__":

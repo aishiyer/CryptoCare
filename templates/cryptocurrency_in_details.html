@@ -33,8 +33,8 @@
         </div>
         
         <div>
-            <div id="div_history" style="display: none"> </div>
-            <div id="div_news" style="display: none"></div>
+            <div id="div_history"> </div>
+            <div id="div_news" ></div>
                 <ul id="ul_news">
 <!--
                     <li>
@@ -44,9 +44,9 @@
                     </li>
 -->
             </ul>
-            <div id="div_market" style="display: none"></div>
-            <div id="prediction" style="display: none"></div>
-            <div id="div_calculator" style="display: none"></div>
+            <div id="div_market"></div>
+            <div id="prediction"></div>
+            <div id="div_calculator"></div>
         </div>
     </div>
     
@@ -58,9 +58,17 @@
     <script>window.jQuery || document.write('<script src="{{
   url_for('static', filename='jquery-3.3.1.js') }}">\x3C/script>')</script>
     <script>
+
+     $(document).ready(function () {
+         console.log("in document.ready")
+    getNews();
+         getmarketDetails();
+         getMultipleSymbolPrice();
+          getPrediction();
+    });
+
       //News
-  $(function() {
-    $('#btn_news').bind('click', function() {
+  function getNews(){
       $.getJSON($SCRIPT_ROOT + '/news', {
         asset_id: $('#btn_news').val()
       }, function(data) {
@@ -84,7 +92,6 @@
                        $('#ul_news').append(_li)
             
                    }
-                   $('#div_news').css("display", "")
                }
                
            }else{
@@ -92,13 +99,12 @@
            }
       });
       return false;
-    });
-  });
+  }
     
     //Market Details
-  $(function() {
+  function getmarketDetails(){
   asset_id = $('#btn_market').val()
-    $('#btn_market').bind('click', function() {
+    
       $.getJSON($SCRIPT_ROOT + '/market_details', {
         asset_id: asset_id
       }, function(data) {
@@ -111,20 +117,32 @@
            }
       });
       return false;
-    });
-  });
+    
+  }
 
 //Prediction
- $(function() {
-    $('#btn_prediction').bind('click', function() {
+ function getPrediction() {
       $.getJSON($SCRIPT_ROOT + '/prediction', {
         asset_id: $('#btn_prediction').val()
       }, function(data) {
            console.log(data)
       });
       return false;
-    });
-  });
+    
+  }
+
+
+  function getMultipleSymbolPrice(){
+      $.getJSON($SCRIPT_ROOT + '/multiple_symbol_price', {
+        asset_id: $('#btn_prediction').val()
+      }, function(data) {
+          multiple_symbols_price_list = data[1]
+           console.log(multiple_symbols_price_list)
+          console.log(typeof multiple_symbols_price_list)
+      });
+      return false;
+    
+  }
      </script>
 
    </body>
