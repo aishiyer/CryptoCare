@@ -12,10 +12,21 @@ import requests
 import ObjCryptoCurrency
 import json
 
-quandl.ApiConfig.api_key = '9JgSrLaxsP64AhdQ6Ss9'
+# quandl.ApiConfig.api_key = '9JgSrLaxsP64AhdQ6Ss9'
+
+import os
+import json
+import pandas as pd
+import csv
 import numpy as np
+import datetime
+import matplotlib.pyplot as plt
+plt.rcParams["figure.figsize"] = (20,10)
+
 from sklearn.linear_model import LinearRegression
-from sklearn import preprocessing, cross_validation
+from sklearn import preprocessing, cross_validation, svm
+
+
 
 app = Flask(__name__)
 
@@ -170,48 +181,146 @@ def market_details():
         return jsonify({'status': 'error'})
 
 
+# @app.route('/prediction', methods=["GET"])
+# def prediction():
+#     df = quandl.get("BCHARTS/KRAKENUSD", start_date="2018-01-01", end_date="2018-03-10")
+#     df = df[['Close']]
+#
+#     forecast_out = int(7)  # predicting 7 days into future
+#     df['Prediction'] = df.shift(-forecast_out)  # label column with data shifted 7 units up
+#
+#     X = np.array(df.drop(['Prediction'], 1))
+#     X = preprocessing.scale(X)
+#
+#     X_forecast = X[-forecast_out:]  # set X_forecast equal to last 30
+#     X = X[:-forecast_out]  # remove last 7 from X
+#
+#     y = np.array(df['Prediction'])
+#     y = y[:-forecast_out]
+#
+#     X_train, X_test, y_train, y_test = cross_validation.train_test_split(X, y, test_size=0.2)
+#
+#     # Training
+#     clf = LinearRegression()
+#     clf.fit(X_train, y_train)
+#     # Testing
+#     confidence = clf.score(X_test, y_test)
+#     print("confidence: ", confidence)
+#
+#     forecast_prediction = clf.predict(X_forecast)
+#     print(forecast_prediction)
+#     for i in forecast_prediction:
+#         print(i)
+#         forecast_prediction[i] = float("%3.f" % forecast_prediction)
+#
+#     print(forecast_prediction)
+#
+#     forecast_with_dates = {}
+#     for i in range(0, 7):
+#         _date = datetime.datetime.now() + datetime.timedelta(days=(i + 1))
+#         forecast_with_dates[_date.timestamp()] = forecast_prediction[i]
+#
+#     print(forecast_with_dates)
+#
+#     return jsonify(forecast_with_dates)
+
+
 @app.route('/prediction', methods=["GET"])
 def prediction():
-    df = quandl.get("BCHARTS/KRAKENUSD", start_date="2018-01-01", end_date="2018-03-10")
-    df = df[['Close']]
+    # Get Live data from the server
+    try:
+        URL = 'https://min-api.cryptocompare.com/data/histoday?fsym=BTC&tsym=USD&limit=1000&aggregate=3&e=CCCAGG'
+        #     URL = 'https://min-api.cryptocompare.com/data/histohour?fsym=BTC&tsym=USD&limit=10000'
+        response = requests.get(URL)
+        if response.status_code == 200:
+            json_response = response.json()
+            crc_data = json_response['Data']
+            print(crc_data)
+        else:
+            print("Error")
+    except Exception as e:
+        print("Error")
 
-    forecast_out = int(7)  # predicting 7 days into future
-    df['Prediction'] = df.shift(-forecast_out)  # label column with data shifted 7 units up
+    # Convert json data to the CSV
+    filename = 'crc_day_history.csv'
+    try:
+        os.remove(filename)
+    except OSError:
+        pass
+    # Open a file for writing
+    crypto_currency_data = open(filename, 'w')
 
-    X = np.array(df.drop(['Prediction'], 1))
+    # Create a csv writter object
+    csvwritter = csv.writer(crypto_currency_data)
+
+    count = 0
+
+    for cr in crc_data:
+        if count == 0:
+            header = cr.keys()
+            csvwritter.writerow(header)
+            count += 1
+        csvwritter.writerow(cr.values())
+
+    crypto_currency_data.close()
+
+    # Reading CSV file
+    crypto_currency_file = open('crc_day_history.csv')
+    crypto_currency_csv = csv.reader(crypto_currency_file)
+
+    for row in crypto_currency_csv:
+        print(row)
+
+    crypto_pd_obj = pd.read_csv(filename)
+
+    # Plot the graph of all data
+    crypto_pd_obj.plot()
+
+    crc_pred = crypto_pd_obj[['open', 'close']]
+    print(crc_pred.tail())
+
+    crc_pred.plot()
+
+    forecast_out = int(1)  # predicting 30 days into future
+    crc_pred['Prediction'] = crc_pred[['open']].shift(-forecast_out)  # label column with data shifted 30 units up
+
+    X = np.array(crc_pred.drop(['Prediction'], 1))
     X = preprocessing.scale(X)
 
     X_forecast = X[-forecast_out:]  # set X_forecast equal to last 30
-    X = X[:-forecast_out]  # remove last 7 from X
+    X = X[:-forecast_out]  # remove last 30 from X
 
-    y = np.array(df['Prediction'])
+    y = np.array(crc_pred['Prediction'])
     y = y[:-forecast_out]
 
     X_train, X_test, y_train, y_test = cross_validation.train_test_split(X, y, test_size=0.2)
 
-    # Training
     clf = LinearRegression()
     clf.fit(X_train, y_train)
-    # Testing
+
     confidence = clf.score(X_test, y_test)
     print("confidence: ", confidence)
 
     forecast_prediction = clf.predict(X_forecast)
     print(forecast_prediction)
-    for i in forecast_prediction:
-        print(i)
-        forecast_prediction[i] = float("%3.f" % forecast_prediction)
 
-    print(forecast_prediction)
+    pd.DataFrame(forecast_prediction).plot(color="blue")
+    print(type(forecast_prediction))
 
-    forecast_with_dates = {}
-    for i in range(0, 7):
-        _date = datetime.datetime.now() + datetime.timedelta(days=(i + 1))
-        forecast_with_dates[_date.timestamp()] = forecast_prediction[i]
+    # for i in forecast_prediction:
+    #     print(i)
+    #     forecast_prediction[i] = float("%3.f" % forecast_prediction)
+    #
+    #
+    # forecast_with_dates = {}
+    # for i in range(0, 7):
+    #     _date = datetime.datetime.now() + datetime.timedelta(days=(i + 1))
+    #     forecast_with_dates[_date.timestamp()] = forecast_prediction[i]
+    #
+    # print(forecast_with_dates)
 
-    print(forecast_with_dates)
-
-    return jsonify(forecast_with_dates)
+    # return jsonify(forecast_prediction)
+    jsonify({'status': 'error'},{'prediction':forecast_prediction})
 
 
 if __name__ == "__main__":
