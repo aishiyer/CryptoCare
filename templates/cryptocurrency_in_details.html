@@ -26,15 +26,15 @@
         <button id="btn_graph" type="button">Graph</button>
         <button id="btn_history" type="button">History</button>
         <button id="btn_news" type="submit" value="{{currency.asset_id}}">News</button>
-        <button id="btn_market" type="submit" value="{{currency.asset_id}}" >market</button>
-        <button id="btn_prediction" type="submit" value="{{currency.asset_id}}">Prediction</button>
+        <button id="btn_market" type="button" value="{{currency.asset_id}}" >market</button>
+        <button id="btn_prediction" type="button" value="{{currency.asset_id}}">Prediction</button>
         <button id="btn_calculate" type="button">Calculate</button>
         </form>
         </div>
         
         <div>
             <div id="div_history"> </div>
-            <div id="div_news" ></div>
+            <div id="div_news" >
                 <ul id="ul_news">
 <!--
                     <li>
@@ -44,8 +44,45 @@
                     </li>
 -->
             </ul>
-            <div id="div_market"></div>
-            <div id="prediction"></div>
+                </div>
+            <div id="div_market">
+                <ul>
+                <li id='CHANGE24HOUR'></li>
+                <li id='CHANGEDAY'></li>
+                <li id='CHANGEPCT24HOUR'></li>
+                <li id='CHANGEPCTDAY'></li>
+                <li id='FROMSYMBOL'></li>
+                <li id='HIGH24HOUR'></li>
+                <li id='HIGHDAY'></li>
+                <li id='LASTMARKET'></li>
+                <li id='LASTTRADEID'></li>
+                <li id='LASTUPDATE'></li>
+                <li id='LASTVOLUME'></li>
+                <li id='LASTVOLUMETO'></li>
+                <li id='LOW24HOUR'></li>
+                <li id='LOWDAY'></li>
+                <li id='MARKET'></li>
+                <li id='MKTCAP'></li>
+                <li id='OPEN24HOUR'></li>
+                <li id='OPENDAY'></li>
+                <li id='PRICE'></li>
+                <li id='SUPPLY'></li>
+                <li id='TOSYMBOL'></li>
+                <li id="TOTALVOLUME24H"></li>
+                <li id="TOTALVOLUME24HTO"></li>
+                <li id="VOLUME24HOUR"></li>
+                <li id="VOLUME24HOURTO"></li>
+                <li id="VOLUMEDAY"></li>
+                <li id="VOLUMEDAYTO"></li>
+                    
+                    
+                    
+            </ul>
+            </div>
+            <div id="prediction">
+                <h5 id='next_day'></h5>
+                <h4 id='prediction_value'></h4>
+            </div>
             <div id="div_calculator"></div>
         </div>
     </div>
@@ -109,9 +146,35 @@
         asset_id: asset_id
       }, function(data) {
            if( data[0].status =="success"){
-           display = data[1].DISPLAY
-           console.log(display[asset_id].USD)
-               
+           display = data[1].DISPLAY[asset_id].USD
+           console.log(display)
+        document.getElementById('CHANGE24HOUR').innerHTML='CHANGE24HOUR: '+display.CHANGE24HOUR;
+               document.getElementById('CHANGEDAY').innerHTML='CHANGEDAY: '+display.CHANGEDAY;
+               document.getElementById('CHANGEPCT24HOUR').innerHTML='CHANGEPCT24HOUR: '+display.CHANGEPCT24HOUR;
+               document.getElementById('CHANGEPCTDAY').innerHTML='CHANGEPCTDAY: '+display.CHANGEPCTDAY;
+               document.getElementById('FROMSYMBOL').innerHTML='FROMSYMBOL: '+display.FROMSYMBOL;
+               document.getElementById('HIGH24HOUR').innerHTML='HIGH24HOUR: '+display.HIGH24HOUR;
+               document.getElementById('HIGHDAY').innerHTML='HIGHDAY: '+display.HIGHDAY;
+               document.getElementById('LASTMARKET').innerHTML='LASTMARKET: '+display.LASTMARKET;
+               document.getElementById('LASTTRADEID').innerHTML='LASTTRADEID: '+display.LASTTRADEID;
+               document.getElementById('LASTUPDATE').innerHTML='LASTUPDATE: '+display.LASTUPDATE;
+               document.getElementById('LASTVOLUME').innerHTML='LASTVOLUME: '+display.LASTVOLUME;
+               document.getElementById('LASTVOLUMETO').innerHTML='LASTVOLUMETO: '+display.LASTVOLUMETO;
+               document.getElementById('LOW24HOUR').innerHTML='LOW24HOUR: '+display.LOW24HOUR;
+               document.getElementById('LOWDAY').innerHTML='LOWDAY: '+display.LOWDAY;
+               document.getElementById('MARKET').innerHTML='MARKET: '+display.MARKET;
+               document.getElementById('MKTCAP').innerHTML='MKTCAP: '+display.MKTCAP;
+               document.getElementById('OPEN24HOUR').innerHTML='OPEN24HOUR: '+display.OPEN24HOUR;
+               document.getElementById('OPENDAY').innerHTML='OPENDAY: '+display.OPENDAY;
+               document.getElementById('PRICE').innerHTML='PRICE: '+display.PRICE;
+               document.getElementById('SUPPLY').innerHTML='SUPPLY: '+display.SUPPLY;
+               document.getElementById('TOSYMBOL').innerHTML='TOSYMBOL: '+display.TOSYMBOL;
+               document.getElementById('TOTALVOLUME24H').innerHTML='TOTALVOLUME24H: '+display.TOTALVOLUME24H;
+               document.getElementById('TOTALVOLUME24HTO').innerHTML='TOTALVOLUME24HTO: '+display.TOTALVOLUME24HTO;
+               document.getElementById('VOLUME24HOUR').innerHTML='VOLUME24HOUR: '+display.VOLUME24HOUR;
+               document.getElementById('VOLUME24HOURTO').innerHTML='VOLUME24HOURTO: '+display.VOLUME24HOURTO;
+               document.getElementById('VOLUMEDAY').innerHTML='VOLUMEDAY: '+display.VOLUMEDAY;
+               document.getElementById('VOLUMEDAYTO').innerHTML='VOLUMEDAYTO: '+display.VOLUMEDAYTO;
            }else{
            alert("Oops! Something went wrong.");
            }
@@ -125,7 +188,13 @@
       $.getJSON($SCRIPT_ROOT + '/prediction', {
         asset_id: $('#btn_prediction').val()
       }, function(data) {
-           console.log(data)
+            console.log(data)
+          var today = new Date()
+          var tomorrow = new Date();
+          tomorrow.setDate(today.getDate()+1);
+          tomorrow_date = tomorrow.getMonth()+"/"+tomorrow.getDate()+"/"+tomorrow.getFullYear()
+          document.getElementById('next_day').innerHTML = tomorrow_date
+          document.getElementById('prediction_value').innerHTML = "Prediction: $"+data[1].prediction
       });
       return false;
     
@@ -143,6 +212,8 @@
       return false;
     
   }
+        
+        
      </script>
 
    </body>

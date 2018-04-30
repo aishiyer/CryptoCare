@@ -324,8 +324,9 @@ def prediction():
         forecast_prediction = clf.predict(X_forecast)
         print(forecast_prediction)
 
-        pd.DataFrame(forecast_prediction).plot(color="blue")
+        # pd.DataFrame(forecast_prediction).plot(color="blue")
         pred_list = forecast_prediction.tolist()
+        print(pred_list[0])
 
         # for i in forecast_prediction:
         #     print(i)
@@ -340,7 +341,7 @@ def prediction():
         # print(forecast_with_dates)
 
         # return jsonify(forecast_prediction)
-        jsonify({'status': 'error'}, json.dumps(pred_list))
+        return jsonify({'status': 'error'}, {'prediction':float(("%0.2f"%pred_list[0]))})
 
     except Exception as e:
         print("Error")
