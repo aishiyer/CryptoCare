@@ -295,12 +295,12 @@ def prediction():
         crypto_pd_obj = pd.read_csv(filename)
 
         # Plot the graph of all data
-        crypto_pd_obj.plot()
+        # crypto_pd_obj.plot()
 
         crc_pred = crypto_pd_obj[['open', 'close']]
         print(crc_pred.tail())
 
-        crc_pred.plot()
+        # crc_pred.plot()
 
         forecast_out = int(1)  # predicting 1 day into future
         crc_pred['Prediction'] = crc_pred[['open']].shift(-forecast_out)  # label column with data shifted 1 units up

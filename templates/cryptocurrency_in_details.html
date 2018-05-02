@@ -390,6 +390,7 @@ function myFunction() {
       $.getJSON($SCRIPT_ROOT + '/prediction', {
         asset_id: $('#input_asset_id').val()
       }, function(data) {
+          if( data[0].status =="success"){
             console.log(data)
           var today = new Date()
           var tomorrow = new Date();
@@ -397,8 +398,12 @@ function myFunction() {
           tomorrow_date = tomorrow.getMonth()+"/"+tomorrow.getDate()+"/"+tomorrow.getFullYear()
           document.getElementById('next_day').innerHTML = tomorrow_date
           document.getElementById('prediction_value').innerHTML = "Prediction: $"+data[1].prediction
+          }else{
+              clearInterval(interval)
+          }
       });
       return false;
+    
 
   }
 
