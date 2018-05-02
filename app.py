@@ -113,12 +113,32 @@ def getCurrencyHistory():
     history_type = (flask.request.args).to_dict(flat=False)["history_type"][0]
     try:
 
+<<<<<<< HEAD
         URL = 'https://min-api.cryptocompare.com/data/{}?fsym={}&tsym=USD&limit=100'.format(history_type,cr_id)
         response = requests.get(URL)
         # Request successful
         if response.status_code == 200:
             json_response = response.json()
             data = json_response['Data']
+=======
+# CryptoCurrency_in_details.html page
+# noinspection PyUnreachableCode
+@app.route("/<cryptocurrency_asset_id>")
+def cryptocurrency_in_details(cryptocurrency_asset_id):
+    currency = CrCurrency()
+    currency1 = CrCurrency()
+    currency2 = CrCurrency()
+    #    currency_details = CrCurrencyDetails()
+    currency_name = ""
+    for c_name, c_id in crc_dict.items():
+        if c_id == cryptocurrency_asset_id:
+            currency_name = c_name
+
+            # URL to get cryptocurrency data in detail
+    URL = 'https://min-api.cryptocompare.com/data/histominute?fsym={}&tsym=USD&limit=1&aggregate=3&e=CCCAGG'.format(
+        cryptocurrency_asset_id)
+    response = requests.get(URL)
+>>>>>>> ca06d90ebee91aa6930fd41de6349d112b31924a
 
             currency_hist_list = []
             for cr in data:
@@ -127,9 +147,58 @@ def getCurrencyHistory():
 
             return jsonify({'status': 'success'}, json.dumps([ob.__dict__ for ob in currency_hist_list]))
         else:
+<<<<<<< HEAD
             return jsonify({'status': 'failed'})
     except Exception as e:
         return jsonify({'status': 'failed'})
+=======
+            return render_template('error_page.html')
+    # Error occurred
+    else:
+        return render_template('error_page.html')
+
+
+>>>>>>> ca06d90ebee91aa6930fd41de6349d112b31924a
+
+    URL = 'https://min-api.cryptocompare.com/data/histohour?fsym={}&tsym=USD&limit=1&aggregate=3&e=CCCAGG'.format(
+        cryptocurrency_asset_id)
+    response = requests.get(URL)
+
+    # Request successful
+    if response.status_code == 200:
+        json_response = response.json()
+        # store data into cryptocurrency_data list
+        if json_response['Response'] == 'Success':
+            data = json_response['Data'][0]
+            currency1 = CrCurrency(cryptocurrency_asset_id, currency_name, data['time'], data['close'], data['high'],
+                                  data['low'], data['open'], data['volumefrom'], data['volumeto'])
+
+        else:
+            return render_template('error_page.html')
+    # Error occurred
+    else:
+        return render_template('error_page.html')
+
+    URL = 'https://min-api.cryptocompare.com/data/histoday?fsym={}&tsym=USD&limit=1&aggregate=3&e=CCCAGG'.format(
+        cryptocurrency_asset_id)
+    response = requests.get(URL)
+
+    # Request successful
+    if response.status_code == 200:
+        json_response = response.json()
+        # store data into cryptocurrency_data list
+        if json_response['Response'] == 'Success':
+            data = json_response['Data'][0]
+            currency2 = CrCurrency(cryptocurrency_asset_id, currency_name, data['time'], data['close'], data['high'],
+                                   data['low'], data['open'], data['volumefrom'], data['volumeto'])
+
+        else:
+            return render_template('error_page.html')
+    # Error occurred
+    else:
+        return render_template('error_page.html')
+
+    return render_template('cryptocurrency_in_details.html', currency1=currency1 , currency = currency , currency2 = currency2)
 
 
 @app.route('/news', methods=["GET"])
