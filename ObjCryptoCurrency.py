@@ -25,7 +25,8 @@ cryptocurrencies_list = ['BTC','XRP','IOT','ETH','LTC','NEO','STRAT','WAVES']
 
 #Cryptocurrency Object Class
 class CryptoCurrency:
-    def __init__(self, asset_id="", name="", cr_price=0, cr_close=0, cr_high=0, cr_low=0, cr_open=0, cr_volume_from=0, cr_volume_to=0, symbol=None, url=None, image_url = None,cr_change_24_hr=None,cr_low_24_hr=None,cr_high_24_hr=None,cr_open_24_hr=None,cr_vol_24_hr=None,cr_last_vol_to=None):
+    def __init__(self, time=None, asset_id="", name="", cr_price=0, cr_close=0, cr_high=0, cr_low=0, cr_open=0, cr_volume_from=0, cr_volume_to=0, symbol=None, url=None, image_url = None,cr_change_24_hr=None,cr_low_24_hr=None,cr_high_24_hr=None,cr_open_24_hr=None,cr_vol_24_hr=None,cr_last_vol_to=None):
+        self.time = time
         self.asset_id = asset_id
         self.name = name
         self.cr_price = cr_price

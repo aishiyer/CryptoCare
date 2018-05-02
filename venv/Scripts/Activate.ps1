@@ -27,7 +27,7 @@ function global:deactivate ([switch]$NonDestructive) {
 
 deactivate -nondestructive
 
-$env:VIRTUAL_ENV="D:\Masters\CPSC 462 - Software Design\CryptoCurrency Project\Github\CryptoCare\venv"
+$env:VIRTUAL_ENV="D:\Masters\CPSC 462 - Software Design\CryptoCurrency Project\Perosnal\CryptoCare\venv"
 
 if (! $env:VIRTUAL_ENV_DISABLE_PROMPT) {
     # Set the prompt to include the env name

@@ -37,7 +37,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="D:\Masters\CPSC 462 - Software Design\CryptoCurrency Project\Github\CryptoCare\venv"
+VIRTUAL_ENV="D:\Masters\CPSC 462 - Software Design\CryptoCurrency Project\Perosnal\CryptoCare\venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"

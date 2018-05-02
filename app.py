@@ -6,27 +6,23 @@
 import cryptocompare
 import datetime
 import flask
-import quandl
 from flask import Flask, render_template, jsonify
 import requests
 import ObjCryptoCurrency
 import json
 
-# quandl.ApiConfig.api_key = '9JgSrLaxsP64AhdQ6Ss9'
 
 import os
 import json
 import pandas as pd
 import csv
 import numpy as np
-import datetime
-import matplotlib.pyplot as plt
-plt.rcParams["figure.figsize"] = (20,10)
+# import matplotlib.pyplot as plt
+
+# plt.rcParams["figure.figsize"] = (20, 10)
 
 from sklearn.linear_model import LinearRegression
 from sklearn import preprocessing, cross_validation, svm
-
-
 
 app = Flask(__name__)
 
@@ -36,11 +32,12 @@ CrCurrencyDetails = ObjCryptoCurrency.CryptoCurrencyDetails
 crc_dict = ObjCryptoCurrency.cryptocurrencies_dict
 crc_list = ObjCryptoCurrency.cryptocurrencies_list
 
-
 # List to store CryptoCurrency data fetched from the server
 cryptocurrencies_data = []
 
 currency = []
+currency1 = []
+currency2 = []
 forecast_prediction = []
 
 
@@ -48,6 +45,12 @@ forecast_prediction = []
 @app.route("/")
 def index():
     return render_template('index.html')
+
+# cryptocurrency_in_details.html page
+@app.route("/<cryptocurrency_asset_id>")
+def cryptocurrencyInDetails(cryptocurrency_asset_id):
+    return render_template('cryptocurrency_in_details.html', currency_id =cryptocurrency_asset_id )
+
 
 # Get list of Cryptocurrencies
 @app.route('/cryptocurrency_list', methods=['GET'])
@@ -65,7 +68,8 @@ def getCrycptoCurrencyList():
             if key in crc_list:
                 print(key)
                 print(value)
-                CrCurrencyList.append(CrCurrency(name=value['CoinName'], symbol=value['Symbol'],url=value['Url'], image_url=value['ImageUrl']))
+                CrCurrencyList.append(CrCurrency(name=value['CoinName'], symbol=value['Symbol'], url=value['Url'],
+                                                 image_url=value['ImageUrl']))
 
         for cr in CrCurrencyList:
             print(cr)
@@ -73,6 +77,7 @@ def getCrycptoCurrencyList():
             return jsonify({'status': 'success'}, json.dumps([ob.__dict__ for ob in CrCurrencyList]))
     except Exception as e:
         return jsonify({'status': 'failed'})
+
 
 @app.route("/currency_meta_data", methods=["GET"])
 def getCryptoCurrencyList():
@@ -90,8 +95,10 @@ def getCryptoCurrencyList():
             # if json_response['Response'] == 'Success':
             data = json_response['DISPLAY']
 
-            currency = CrCurrency(asset_id=cr_id, cr_price=data['PRICE'], cr_last_vol_to=data['LASTVOLUMETO'],cr_vol_24_hr=data['VOLUME24HOUR'],cr_open_24_hr=data['OPEN24HOUR'],cr_high_24_hr=data['HIGH24HOUR'],
-                              cr_low_24_hr=data['LOW24HOUR'],cr_change_24_hr=data['CHANGE24HOUR'])
+            currency = CrCurrency(asset_id=cr_id, cr_price=data['PRICE'], cr_last_vol_to=data['LASTVOLUMETO'],
+                                  cr_vol_24_hr=data['VOLUME24HOUR'], cr_open_24_hr=data['OPEN24HOUR'],
+                                  cr_high_24_hr=data['HIGH24HOUR'],
+                                  cr_low_24_hr=data['LOW24HOUR'], cr_change_24_hr=data['CHANGE24HOUR'])
 
             # return jsonify({'status': 'success'}, json.dumps([ob.__dict__ for ob in currency]))
             return jsonify({'status': 'success'}, currency.toJSON())
@@ -100,63 +107,56 @@ def getCryptoCurrencyList():
     except Exception as e:
         return jsonify({'status': 'failed'})
 
+@app.route('/currency_history', methods=["GET"])
+def getCurrencyHistory():
+    cr_id = (flask.request.args).to_dict(flat=False)["cr_id"][0]
+    history_type = (flask.request.args).to_dict(flat=False)["history_type"][0]
+    try:
 
-# CryptoCurrency_in_details.html page
-@app.route("/<cryptocurrency_asset_id>")
-def cryptocurrency_in_details(cryptocurrency_asset_id):
-    currency = CrCurrency()
-    #    currency_details = CrCurrencyDetails()
-    currency_name = ""
-    for c_name, c_id in crc_dict.items():
-        if c_id == cryptocurrency_asset_id:
-            currency_name = c_name
+        URL = 'https://min-api.cryptocompare.com/data/{}?fsym={}&tsym=USD&limit=100'.format(history_type,cr_id)
+        response = requests.get(URL)
+        # Request successful
+        if response.status_code == 200:
+            json_response = response.json()
+            data = json_response['Data']
 
-            # URL to get cryptocurrency data in detail
-    URL = 'https://min-api.cryptocompare.com/data/histominute?fsym={}&tsym=USD&limit=1&aggregate=3&e=CCCAGG'.format(
-        cryptocurrency_asset_id)
-    response = requests.get(URL)
+            currency_hist_list = []
+            for cr in data:
+                currency = CrCurrency(asset_id=cr_id, time=cr['time'], cr_open=cr['open'], cr_close=cr['close'],cr_high=cr['high'],cr_low=cr['low'])
+                currency_hist_list.append(currency)
 
-    # Request successful
-    if response.status_code == 200:
-        json_response = response.json()
-        # store data into cryptocurrency_data list
-        if json_response['Response'] == 'Success':
-            data = json_response['Data'][0]
-            currency = CrCurrency(cryptocurrency_asset_id, currency_name, data['time'], data['close'], data['high'],
-                                  data['low'], data['open'], data['volumefrom'], data['volumeto'])
-
+            return jsonify({'status': 'success'}, json.dumps([ob.__dict__ for ob in currency_hist_list]))
         else:
-            return render_template('error_page.html')
-    # Error occurred
-    else:
-        return render_template('error_page.html')
-
-    return render_template('cryptocurrency_in_details.html', currency=currency)
-
+            return jsonify({'status': 'failed'})
+    except Exception as e:
+        return jsonify({'status': 'failed'})
 
 
 @app.route('/news', methods=["GET"])
 def news():
     # name = Flask.request_class.args.get('name',default=None, type=None)
+    try:
+        asset_id = (flask.request.args).to_dict(flat=False)["asset_id"][0]
+        currency_name = ""
+        for c_name, c_id in crc_dict.items():
+            if c_id == asset_id:
+                currency_name = c_name
 
-    asset_id = (flask.request.args).to_dict(flat=False)["asset_id"][0]
-    currency_name = ""
-    for c_name, c_id in crc_dict.items():
-        if c_id == asset_id:
-            currency_name = c_name
+        URL = 'https://newsapi.org/v2/everything?q={}&sortBy=publishedAt&apiKey=3fabdc3fed8d481c92f7c2deeb0147e9'.format(
+            currency_name)
+        response = requests.get(URL)
 
-    URL = 'https://newsapi.org/v2/everything?q={}&sortBy=publishedAt&apiKey=3fabdc3fed8d481c92f7c2deeb0147e9'.format(
-        currency_name)
-    response = requests.get(URL)
+        # Request successful
+        if response.status_code == 200:
+            json_response = response.json()
+            print(json_response)
+            return jsonify({'status': 'success'}, json_response)
 
-    # Request successful
-    if response.status_code == 200:
-        json_response = response.json()
-        print(json_response)
-        return jsonify({'status': 'success'}, json_response)
+        # Error occurred
+        else:
+            return jsonify({'status': 'error'})
 
-    # Error occurred
-    else:
+    except Exception as e:
         return jsonify({'status': 'error'})
 
 
@@ -200,6 +200,7 @@ def getMultiplePrices():
     # Error occurred
     else:
         return jsonify({'status': 'error'})
+
 
 # @app.route('/prediction', methods=["GET"])
 # def prediction():
@@ -250,7 +251,8 @@ def prediction():
     # Get Live data from the server
     try:
         crycpto_currency = (flask.request.args).to_dict(flat=False)["asset_id"][0]
-        URL = 'https://min-api.cryptocompare.com/data/histoday?fsym={}&tsym=USD&limit=1000&aggregate=3&e=CCCAGG'.format(crycpto_currency)
+        URL = 'https://min-api.cryptocompare.com/data/histoday?fsym={}&tsym=USD&limit=1000&aggregate=3&e=CCCAGG'.format(
+            crycpto_currency)
         #     URL = 'https://min-api.cryptocompare.com/data/histohour?fsym={}&tsym=USD&limit=10000'.format(crycpto_currency)
         response = requests.get(URL)
         if response.status_code == 200:
@@ -259,7 +261,6 @@ def prediction():
             print(crc_data)
         else:
             print("Error")
-
 
         # Convert json data to the CSV
         filename = 'crc_day_history.csv'
@@ -285,7 +286,7 @@ def prediction():
         crypto_currency_data.close()
 
         # Reading CSV file
-        crypto_currency_file = open('crc_day_history.csv','r')
+        crypto_currency_file = open('crc_day_history.csv', 'r')
         crypto_currency_csv = csv.reader(crypto_currency_file)
 
         # for row in crypto_currency_csv:
@@ -328,24 +329,11 @@ def prediction():
         pred_list = forecast_prediction.tolist()
         print(pred_list[0])
 
-        # for i in forecast_prediction:
-        #     print(i)
-        #     forecast_prediction[i] = float("%3.f" % forecast_prediction)
-        #
-        #
-        # forecast_with_dates = {}
-        # for i in range(0, 7):
-        #     _date = datetime.datetime.now() + datetime.timedelta(days=(i + 1))
-        #     forecast_with_dates[_date.timestamp()] = forecast_prediction[i]
-        #
-        # print(forecast_with_dates)
-
         # return jsonify(forecast_prediction)
-        return jsonify({'status': 'error'}, {'prediction':float(("%0.2f"%pred_list[0]))})
+        return jsonify({'status': 'success'}, {'prediction': float(("%0.2f" % pred_list[0]))})
 
     except Exception as e:
-        print("Error")
-
+        return jsonify({'status': 'error'})
 
 
 if __name__ == "__main__":

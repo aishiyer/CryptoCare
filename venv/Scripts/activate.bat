@@ -1,5 +1,5 @@
 @echo off
-set "VIRTUAL_ENV=D:\Masters\CPSC 462 - Software Design\CryptoCurrency Project\Github\CryptoCare\venv"
+set "VIRTUAL_ENV=D:\Masters\CPSC 462 - Software Design\CryptoCurrency Project\Perosnal\CryptoCare\venv"
 
 if not defined PROMPT (
     set "PROMPT=$P$G"
